@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import exceptions.*;
 
 import by.bsu.dependency.annotation.Bean;
 
 
 public class HardCodedSingletonApplicationContext extends AbstractApplicationContext {
 
-    private final Map<String, Class<?>> beanDefinitions;
     private final Map<String, Object> beans = new HashMap<>();
 
     /**
@@ -27,6 +27,7 @@ public class HardCodedSingletonApplicationContext extends AbstractApplicationCon
      *
      * @param beanClasses классы, из которых требуется создать бины
      */
+
     public HardCodedSingletonApplicationContext(Class<?>... beanClasses) {
         this.beanDefinitions = Arrays.stream(beanClasses).collect(
                 Collectors.toMap(
@@ -43,22 +44,32 @@ public class HardCodedSingletonApplicationContext extends AbstractApplicationCon
 
     @Override
     public boolean isRunning() {
-        throw new IllegalStateException("not implemented");
+        return !beans.isEmpty();
+        //throw new IllegalStateException("not implemented");
     }
 
     /**
-     * В этой реализации отсутствуют проверки статуса контекста (запущен ли он).
+     * В этой реализации отсутствуют проверки статуса контекста (запущен ли он).  //made
      */
     @Override
     public boolean containsBean(String name) {
+        if (!isRunning()) {
+            throw new ApplicationContextNotStartedException();
+        }
         return beans.containsKey(name);
     }
 
     /**
      * В этой реализации отсутствуют проверки статуса контекста (запущен ли он) и исключения в случае отсутствия бина
-     */
+     */ //made
     @Override
     public Object getBean(String name) {
+        if (!isRunning()) {
+            throw new ApplicationContextNotStartedException();
+        }
+        if (!beans.containsKey(name)) {
+            throw new NoSuchBeanDefinitionException();
+        }
         return beans.get(name);
     }
 
@@ -69,15 +80,22 @@ public class HardCodedSingletonApplicationContext extends AbstractApplicationCon
 
     @Override
     public boolean isPrototype(String name) {
+        if (!beanDefinitions.containsKey(name)) {
+            throw new NoSuchBeanDefinitionException();
+        }
         return false;
     }
 
     @Override
     public boolean isSingleton(String name) {
+        if (!beanDefinitions.containsKey(name)) {
+            throw new NoSuchBeanDefinitionException();
+        }
         return true;
     }
 
-    private <T> T instantiateBean(Class<T> beanClass) {
+    @Override
+    public <T> T instantiateBean(Class<T> beanClass) {
         try {
             return beanClass.getConstructor().newInstance();
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException |

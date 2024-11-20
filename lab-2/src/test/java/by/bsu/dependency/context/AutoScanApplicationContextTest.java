@@ -1,21 +1,23 @@
 package by.bsu.dependency.context;
 
-import by.bsu.dependency.examplesForTests.FirstBean;
-import by.bsu.dependency.examplesForTests.OtherBean;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import by.bsu.dependency.examplesForTests.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import exceptions.NoSuchBeanDefinitionException;
+import static org.junit.jupiter.api.Assertions.*;
 
-class HardCodedSingletonApplicationContextTest {
+import org.junit.jupiter.api.BeforeEach;
+
+import exceptions.NoSuchBeanDefinitionException;
+import exceptions.ApplicationContextNotStartedException;
+
+class AutoScanApplicationContextTest {
 
     private ApplicationContext applicationContext;
 
     @BeforeEach
     void init() {
-        applicationContext = new HardCodedSingletonApplicationContext(FirstBean.class, OtherBean.class);
+        applicationContext = new AutoScanApplicationContext("by.bsu.dependency.examplesForTests");
     }
 
     @Test
@@ -28,10 +30,15 @@ class HardCodedSingletonApplicationContextTest {
     @Test
     void testContextContainsNotStarted() {
         assertThrows(
-                // TODO: уточнить класс исключения (ApplicationContextNotStartedException)
-                RuntimeException.class,
+                ApplicationContextNotStartedException.class,
                 () -> applicationContext.containsBean("firstBean")
         );
+    }
+
+    @Test
+    void testNotContainsBeanWithoutAnnotation() {
+        applicationContext.start();
+        assertThat(applicationContext.containsBean("notBean")).isFalse();
     }
 
     @Test
@@ -46,8 +53,7 @@ class HardCodedSingletonApplicationContextTest {
     @Test
     void testContextGetBeanNotStarted() {
         assertThrows(
-                // TODO: уточнить класс исключения (ApplicationContextNotStartedException)
-                RuntimeException.class,
+                ApplicationContextNotStartedException.class,
                 () -> applicationContext.getBean("firstBean")
         );
     }
@@ -65,8 +71,7 @@ class HardCodedSingletonApplicationContextTest {
         applicationContext.start();
 
         assertThrows(
-                // TODO: уточнить класс исключения (NoSuchBeanDefinitionException)
-                RuntimeException.class,
+                NoSuchBeanDefinitionException.class,
                 () -> applicationContext.getBean("randomName")
         );
     }
@@ -80,7 +85,6 @@ class HardCodedSingletonApplicationContextTest {
     @Test
     void testIsSingletonThrows() {
         assertThrows(
-                // TODO: уточнить класс исключения (NoSuchBeanDefinitionException)
                 NoSuchBeanDefinitionException.class,
                 () -> applicationContext.isSingleton("randomName")
         );
@@ -95,7 +99,6 @@ class HardCodedSingletonApplicationContextTest {
     @Test
     void testIsPrototypeThrows() {
         assertThrows(
-                // TODO: уточнить класс исключения (NoSuchBeanDefinitionException)
                 NoSuchBeanDefinitionException.class,
                 () -> applicationContext.isPrototype("randomName")
         );
